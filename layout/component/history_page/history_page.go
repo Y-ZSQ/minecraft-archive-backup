@@ -11,6 +11,7 @@ import (
 	"minecraft-archive-backup/layout/component/progress_page"
 	"minecraft-archive-backup/layout/manage"
 	"minecraft-archive-backup/model/dto/database"
+	"unicode/utf8"
 )
 
 func NewWindow(a *database.Archive) {
@@ -113,26 +114,6 @@ func refreshCards(a *database.Archive, window fyne.Window, grid *fyne.Container)
 				Size:          fyne.Size{Width: 250, Height: 250},
 				Callback: func(input string, confirmed bool) {
 					if confirmed {
-						//// 开始进行备份
-						//var stdChan = archive.ResticBackup(a)
-						//
-						//// 将通道和存档信息传入备份页面
-						//progress_page.NewWindow(a, 0, stdChan, func(success bool, errorMsg string, lastMessage *archive.BackupMessage) {
-						//	if success {
-						//		// 创建一个备份记录
-						//		var err = archive.CreateBackupRecord(&database.BackupRecord{
-						//			ArchiveID: a.ID,
-						//			SnapShot:  lastMessage.SnapshotID,
-						//			Comment:   "回档前,系统对当前存档创建的快照",
-						//		})
-						//		if err != nil {
-						//			dialog.NewInformation("快照ID写入到sqlite失败", err.Error(), window).Show()
-						//			return
-						//		}
-						//
-						//		// 刷新记录卡片
-						//		refreshCards(a, window, grid)
-
 						// 进行回档
 						var stdChan = archive.ResticRestore(a, &record)
 						// 将通道和存档信息传入备份页面
@@ -152,11 +133,27 @@ func refreshCards(a *database.Archive, window fyne.Window, grid *fyne.Container)
 		})
 		restoreBtn.Importance = widget.HighImportance
 
+		// 详细信息按钮
+		infoBtn := widget.NewButtonWithIcon("存档信息", theme.ListIcon(), func() {
+			var rawData, _ = archive.ResticRawData(record.SnapShot)
+			var RestoreSize, _ = archive.ResticRestoreSize(record.SnapShot)
+			dialog.NewInformation("存档详细信息",
+				fmt.Sprintf(`存档备注：%s
+创建时间：%s
+快照ID ：%s
+存储占用：%dMB
+原始大小：%dMB
+`, record.Comment, record.CreatedAt.Format("2006年01月02日15:04:05"), record.SnapShot[:8], rawData.TotalSize/1048576, RestoreSize.TotalSize/1048576),
+				window,
+			).Show()
+		})
+		infoBtn.Importance = widget.WarningImportance
+
 		// 创建卡片
 		card := widget.NewCard(
 			formattedTime,
-			record.Comment,
-			container.NewBorder(nil, nil, deleteBtn, restoreBtn),
+			truncateWithEllipsis(record.Comment, 27),
+			container.NewHBox(deleteBtn, infoBtn, restoreBtn),
 		)
 
 		// 将卡片添加到网格中
@@ -167,4 +164,13 @@ func refreshCards(a *database.Archive, window fyne.Window, grid *fyne.Container)
 	fyne.Do(func() {
 		grid.Refresh()
 	})
+}
+
+func truncateWithEllipsis(s string, maxChars int) string {
+	if utf8.RuneCountInString(s) <= maxChars {
+		return s
+	}
+
+	runes := []rune(s)
+	return string(runes[:maxChars-1]) + "…" // 使用省略号
 }
