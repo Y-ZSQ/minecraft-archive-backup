@@ -15,6 +15,7 @@ func ResticForget(snapshots ...string) error {
 	// 构建命令参数
 	args := []string{"forget"}
 	args = append(args, "--json")
+	args = append(args, "--prune")
 	args = append(args, snapshots...)
 
 	cmd := NewResticCmd(exec.Command("restic", args...))
