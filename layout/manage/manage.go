@@ -1,3 +1,4 @@
+// manage/window.go
 package manage
 
 import (
@@ -17,32 +18,36 @@ type WindowPool struct {
 }
 
 // 全局窗口池实例
-var windowPool = &WindowPool{
-	pool: NewPool(
-		func() interface{} {
-			return newWindow()
-		},
-		10,            // 最大保留10个窗口
-		5,             // 最小保留5个窗口
-		5*time.Minute, // 每10分钟清理一次
-	),
+var windowPool *WindowPool
+
+// initWindowPool 初始化窗口池
+func initWindowPool() {
+	if windowPool == nil {
+		windowPool = &WindowPool{
+			pool: NewPool(
+				func() interface{} {
+					return newWindow()
+				},
+				10,            // 最大保留10个窗口
+				5,             // 最小保留5个窗口
+				5*time.Minute, // 每5分钟清理一次
+			),
+		}
+	}
 }
 
 // newWindow 创建新窗口
 func newWindow() fyne.Window {
+	fmt.Println("创建了一个新的窗口")
 	newWindow := App.NewWindow("")
 	newWindow.CenterOnScreen() // 居中窗口
 	newWindow.SetIcon(icon.CreeperPng)
-	newWindow.SetFixedSize(true)
-	newWindow.SetCloseIntercept(func() {
-		PutWindow(newWindow)
-	})
 	return newWindow
 }
 
 // GetWindow 获取窗口
 func GetWindow() fyne.Window {
-	fmt.Println("创建了一个新的窗口")
+	initWindowPool()
 
 	obj := windowPool.pool.Get()
 	window, ok := obj.(fyne.Window)
@@ -50,6 +55,12 @@ func GetWindow() fyne.Window {
 		// 如果类型断言失败，创建新窗口
 		window = newWindow()
 	}
+
+	// 设置默认的窗口关闭事件
+	window.SetFixedSize(true)
+	window.SetCloseIntercept(func() {
+		PutWindow(window)
+	})
 
 	return window
 }
@@ -74,4 +85,10 @@ func PutWindow(window fyne.Window) {
 
 	// 放回对象池
 	windowPool.pool.Put(window)
+}
+
+// GetWindowPoolSize 获取当前窗口池中的窗口数量
+func GetWindowPoolSize() int {
+	initWindowPool()
+	return windowPool.pool.Size()
 }
