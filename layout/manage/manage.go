@@ -1,4 +1,3 @@
-// manage/window.go
 package manage
 
 import (
@@ -7,6 +6,7 @@ import (
 	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/container"
 	"minecraft-archive-backup/layout/resource/icon"
+	"minecraft-archive-backup/pkg/pool"
 	"time"
 )
 
@@ -14,7 +14,7 @@ var App = app.New()
 
 // WindowPool 窗口对象池
 type WindowPool struct {
-	pool *Pool
+	pool *pool.Pool
 }
 
 // 全局窗口池实例
@@ -24,7 +24,7 @@ var windowPool *WindowPool
 func initWindowPool() {
 	if windowPool == nil {
 		windowPool = &WindowPool{
-			pool: NewPool(
+			pool: pool.NewPool(
 				func() interface{} {
 					return newWindow()
 				},
@@ -85,10 +85,4 @@ func PutWindow(window fyne.Window) {
 
 	// 放回对象池
 	windowPool.pool.Put(window)
-}
-
-// GetWindowPoolSize 获取当前窗口池中的窗口数量
-func GetWindowPoolSize() int {
-	initWindowPool()
-	return windowPool.pool.Size()
 }

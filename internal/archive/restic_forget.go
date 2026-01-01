@@ -1,7 +1,6 @@
 package archive
 
 import (
-	"errors"
 	"fmt"
 	"os/exec"
 )
@@ -9,7 +8,7 @@ import (
 // ResticForget 删除指定的快照
 func ResticForget(snapshots ...string) error {
 	if len(snapshots) == 0 {
-		return errors.New("至少需要指定一个快照")
+		return nil
 	}
 
 	// 构建命令参数

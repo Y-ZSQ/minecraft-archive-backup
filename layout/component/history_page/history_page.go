@@ -11,6 +11,7 @@ import (
 	"minecraft-archive-backup/layout/component/progress_page"
 	"minecraft-archive-backup/layout/manage"
 	"minecraft-archive-backup/model/dto/database"
+	"path/filepath"
 	"unicode/utf8"
 )
 
@@ -104,12 +105,18 @@ func refreshCards(a *database.Archive, window fyne.Window, grid *fyne.Container)
 		deleteBtn.Importance = widget.DangerImportance
 
 		restoreBtn := widget.NewButtonWithIcon("快照回档", theme.ViewRefreshIcon(), func() {
+			fmt.Println(filepath.Join(a.Path, "session.lock"))
+			if ok, _ := IsWorldInUse(filepath.Join(a.Path, "session.lock")); ok {
+				dialog.NewInformation("注意", "如果您要回档,您需要退出当前地图(无需退出游戏)", window).Show()
+				return
+			}
+
 			manage.ShowConfirmInputDialog(&manage.ConfirmInputConfig{
 				Title:         "回档指定快照",
 				Message:       "您确认要进行回档吗？",
 				ExpectedInput: "确认回档",
 				Placeholder:   "请输入确认回档",
-				ErrorTest:     "您在回档时，软件将会自动为您当前存档创建一个快照。",
+				ErrorTest:     "请注意！回档的操作是不可逆的，务必谨慎！",
 				Parent:        window,
 				Size:          fyne.Size{Width: 250, Height: 250},
 				Callback: func(input string, confirmed bool) {

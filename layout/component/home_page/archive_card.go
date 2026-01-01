@@ -49,10 +49,10 @@ func NewCard(a *database.Archive, window fyne.Window) *ArchiveCard {
 							return
 						}
 					}
-
 					// 删除 sqlite 中存储的数据
 					var err = archive.DeleteArchive(a.ID)
 					if err != nil {
+						fmt.Println(err)
 						dialog.NewInformation("删除 sqlite 失败", err.Error(), window).Show()
 						return
 					}
