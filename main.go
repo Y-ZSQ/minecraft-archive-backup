@@ -2,8 +2,10 @@ package main
 
 import (
 	"errors"
+	"fmt"
 	"github.com/nightlyone/lockfile"
 	"log"
+	"minecraft-archive-backup/internal/archive"
 	"minecraft-archive-backup/layout/component/home_page"
 	etc "minecraft-archive-backup/pkg/etc/core"
 )
@@ -18,7 +20,11 @@ func main() {
 	//}()
 
 	// 启动窗口
+
+	fmt.Println(archive.ResticSnapshotInfo("f2c48c2c"))
+
 	home_page.Run()
+
 }
 
 // tryRun 锁文件 防止程序多开

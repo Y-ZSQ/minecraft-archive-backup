@@ -9,11 +9,14 @@ import (
 
 // ResticRestore 回档到指定的快照id时
 func ResticRestore(archive *database.Archive, record *database.BackupRecord) <-chan *BackupMessage {
+	// 查询当前快照的备份路径
+	var info, _ = ResticSnapshotInfo(record.SnapShot)
+
 	// 构建命令参数
 	args := []string{"restore", "--json"}
 	args = append(args, fmt.Sprintf("%s:%s",
 		record.SnapShot,
-		ConvertWindowsToUnixPath(archive.Path)))
+		ConvertWindowsToUnixPath(info.Paths[0])))
 	args = append(args, "--target", archive.Path)
 
 	cmd := NewResticCmd(exec.Command("restic", args...))

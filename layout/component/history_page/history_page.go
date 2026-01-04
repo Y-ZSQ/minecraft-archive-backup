@@ -37,22 +37,25 @@ func content(a *database.Archive, window fyne.Window) *fyne.Container {
 	// 创建卡片容器
 	grid := container.NewGridWrap(fyne.Size{Width: 400, Height: 120})
 
+	// 创建滚动容器
+	var scrollContainer = container.NewScroll(container.NewPadded(grid))
+
 	// 添加刷新按钮
 	refreshBtn := widget.NewButtonWithIcon("刷新记录", theme.ViewRefreshIcon(), func() {
-		refreshCards(a, window, grid)
+		refreshCards(a, window, grid, scrollContainer)
 	})
 
 	// 创建主容器
-	mainContainer := container.NewBorder(refreshBtn, nil, nil, nil, container.NewScroll(container.NewPadded(grid)))
+	mainContainer := container.NewBorder(refreshBtn, nil, nil, nil, scrollContainer)
 
 	// 初始加载卡片
-	refreshCards(a, window, grid)
+	refreshCards(a, window, grid, scrollContainer)
 
 	return mainContainer
 }
 
 // 刷新卡片内容
-func refreshCards(a *database.Archive, window fyne.Window, grid *fyne.Container) {
+func refreshCards(a *database.Archive, window fyne.Window, grid *fyne.Container, scrollContainer *container.Scroll) {
 	// 清空现有卡片
 	grid.RemoveAll()
 
@@ -97,7 +100,7 @@ func refreshCards(a *database.Archive, window fyne.Window, grid *fyne.Container)
 						}
 
 						// 删除后刷新卡片
-						refreshCards(a, window, grid)
+						refreshCards(a, window, grid, scrollContainer)
 					}
 				},
 			})
@@ -170,6 +173,9 @@ func refreshCards(a *database.Archive, window fyne.Window, grid *fyne.Container)
 	// 刷新容器显示
 	fyne.Do(func() {
 		grid.Refresh()
+
+		scrollContainer.ScrollToBottom()
+		scrollContainer.Refresh()
 	})
 }
 

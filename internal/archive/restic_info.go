@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os/exec"
+	"time"
 )
 
 type RawData struct {
@@ -75,4 +76,50 @@ func ResticRestoreSize(snapshots string) (*RestoreSize, error) {
 	err = json.Unmarshal(output, data)
 
 	return data, err
+}
+
+type SnapshotMessage struct {
+	Time           time.Time `json:"time"`
+	Parent         string    `json:"parent"`
+	Tree           string    `json:"tree"`
+	Paths          []string  `json:"paths"`
+	Hostname       string    `json:"hostname"`
+	Username       string    `json:"username"`
+	ProgramVersion string    `json:"program_version"`
+	Summary        struct {
+		BackupStart         time.Time `json:"backup_start"`
+		BackupEnd           time.Time `json:"backup_end"`
+		FilesNew            int       `json:"files_new"`
+		FilesChanged        int       `json:"files_changed"`
+		FilesUnmodified     int       `json:"files_unmodified"`
+		DirsNew             int       `json:"dirs_new"`
+		DirsChanged         int       `json:"dirs_changed"`
+		DirsUnmodified      int       `json:"dirs_unmodified"`
+		DataBlobs           int       `json:"data_blobs"`
+		TreeBlobs           int       `json:"tree_blobs"`
+		DataAdded           int       `json:"data_added"`
+		DataAddedPacked     int       `json:"data_added_packed"`
+		TotalFilesProcessed int       `json:"total_files_processed"`
+		TotalBytesProcessed int       `json:"total_bytes_processed"`
+	} `json:"summary"`
+	Id      string `json:"id"`
+	ShortId string `json:"short_id"`
+}
+
+// ResticSnapshotInfo 获取快照的详细信息
+// restic snapshots
+func ResticSnapshotInfo(snapshotID string) (*SnapshotMessage, error) {
+	var result = make([]*SnapshotMessage, 1)
+
+	args := []string{"snapshots", "--json", snapshotID}
+	cmd := NewResticCmd(exec.Command("restic", args...))
+
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return result[0], err
+	}
+
+	_ = json.Unmarshal(output, &result)
+
+	return result[0], nil
 }
